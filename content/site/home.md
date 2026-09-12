@@ -19,5 +19,3 @@ credits: ""
 published: true
 body_format: "plain"
 ---
-
-

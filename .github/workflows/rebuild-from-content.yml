@@ -1,0 +1,44 @@
+name: Rebuild site from content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "content/**"
+      - "scripts/build-content.mjs"
+      - "scripts/validate-site.mjs"
+
+concurrency:
+  group: sosil-content-publish
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build static pages
+        run: node scripts/build-content.mjs
+      - name: Validate generated site
+        run: node scripts/validate-site.mjs
+      - name: Commit generated files
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Rebuild site from content"
+          git push origin main
