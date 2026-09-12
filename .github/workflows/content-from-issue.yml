@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   publish:
-    if: startsWith(github.event.issue.title, '[Content]') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    if: (startsWith(github.event.issue.title, '[Content]') || startsWith(github.event.issue.title, '[Edit]')) && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,7 +25,11 @@ jobs:
         with:
           node-version: 22
       - name: Create content file
+        if: startsWith(github.event.issue.title, '[Content]')
         run: node scripts/publish-issue.mjs
+      - name: Edit content file
+        if: startsWith(github.event.issue.title, '[Edit]')
+        run: node scripts/edit-content.mjs
       - name: Build static pages
         run: node scripts/build-content.mjs
       - name: Validate generated site
@@ -35,7 +39,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content . ':!.github'
-          git commit -m "Publish content from issue #${{ github.event.issue.number }}"
+          git commit -m "Apply content issue #${{ github.event.issue.number }}"
           git push origin main
       - name: Close successful issue
         env:

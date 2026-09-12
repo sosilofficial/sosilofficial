@@ -50,7 +50,16 @@ if (category === "archive" && ["photo", "video"].includes(subcategory)) {
   if (fs.existsSync(peer)) throw new Error(`CONTENT ERROR: Archive Photo/Video에 같은 slug가 이미 존재합니다: ${slug}`);
 }
 
-const urls = (value = "") => [...new Set([...value.matchAll(/https?:\/\/[^\s)]+|\/[\w./-]+\.(?:jpg|jpeg|png|webp|gif)/gi)].map((match) => match[0]))];
+const urls = (value = "") => [...new Set([...value.matchAll(/https?:\/\/[^\s<>"')\]]+|\/[\w./-]+\.(?:jpg|jpeg|png|webp|gif)/gi)].map((match) => match[0].replace(/[.,;:]+$/, "")))];
+function youtubeThumbnail(url) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const id = host === "youtu.be" ? parsed.pathname.split("/").filter(Boolean)[0] : ["youtube.com", "m.youtube.com"].includes(host) ? parsed.searchParams.get("v") || parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1] : "";
+    return id && /^[\w-]{6,}$/.test(id) ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : "";
+  } catch { return ""; }
+}
 const linkLines = (form["외부 링크"] || "").split("\n").map((line) => line.trim()).filter(Boolean);
 const links = linkLines.map((line) => {
   const divider = line.indexOf("|");
@@ -59,15 +68,15 @@ const links = linkLines.map((line) => {
   if (!/^https?:\/\//.test(url)) throw new Error(`CONTENT ERROR: 외부 링크가 올바르지 않습니다: ${line}`);
   return { label: label || "link", url };
 });
-const thumbnail = urls(form["썸네일 이미지"] || "")[0] || "";
 const images = urls(form["본문 이미지"] || "");
 const video = urls(form["영상 링크"] || "")[0] || "";
+const thumbnail = urls(form["썸네일 이미지"] || "")[0] || youtubeThumbnail(video);
 const extra = form["추가 설명"]?.trim() || "";
 const meta = category === "news" ? "NOTICE" : subcategory === "video" ? "video" : subcategory === "photo" ? "image" : extra;
 
 const data = {
   type: "content", category, subcategory, title, date, slug,
-  url: category === "notes" ? `/gibberish/${slug}` : category === "archive" && ["photo", "video"].includes(subcategory) ? `/archive/photo-video/${slug}` : category === "works" && subcategory === "video" ? video : category === "archive" && subcategory === "links" ? links[0]?.url || "" : category === "merch" ? `/merch/${slug}` : `/${category}${subcategory ? `/${subcategory}` : ""}/${slug}`,
+  url: category === "notes" ? `/notes/${slug}` : category === "archive" && ["photo", "video"].includes(subcategory) ? `/archive/photo-video/${slug}` : category === "works" && subcategory === "video" ? video : category === "archive" && subcategory === "links" ? links[0]?.url || "" : category === "merch" ? `/merch/${slug}` : `/${category}${subcategory ? `/${subcategory}` : ""}/${slug}`,
   description: form["설명"]?.trim() || "", thumbnail, images, video, links, meta,
   media_type: subcategory === "video" ? "video" : subcategory === "photo" ? "image" : "",
   subtitle: "", creator: "", tracklist: [], credits: "", published: true, body_format: "markdown",

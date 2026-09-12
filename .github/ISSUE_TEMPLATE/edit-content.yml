@@ -1,0 +1,73 @@
+name: Edit existing content
+description: 기존 콘텐츠를 코드를 수정하지 않고 변경합니다.
+title: "[Edit] "
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: 카테고리
+      options:
+        - News
+        - Notes
+        - Archive Photo
+        - Archive Video
+        - Archive Links
+        - Works Discography
+        - Works Video
+        - Works Live
+        - Works Others
+        - Merch
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: 기존 콘텐츠 slug 또는 현재 URL
+      description: 수정할 콘텐츠의 slug 또는 현재 전체 URL을 정확히 입력하세요.
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: 새 제목
+      description: 비워두면 기존 제목을 유지합니다.
+  - type: input
+    id: date
+    attributes:
+      label: 새 날짜
+      description: YYYY-MM-DD 형식. 비워두면 기존 날짜를 유지합니다.
+  - type: textarea
+    id: body
+    attributes:
+      label: 새 본문
+      description: 비워두면 기존 본문을 유지합니다.
+  - type: textarea
+    id: description
+    attributes:
+      label: 새 설명
+      description: 비워두면 기존 설명을 유지합니다.
+  - type: textarea
+    id: thumbnail
+    attributes:
+      label: 새 썸네일 이미지
+      description: 이미지를 드래그해 업로드하거나 URL을 입력하세요. 비워두면 기존 값을 유지합니다.
+  - type: textarea
+    id: images
+    attributes:
+      label: 새 본문 이미지
+      description: 여러 이미지를 드래그해 업로드할 수 있습니다. 비워두면 기존 값을 유지합니다.
+  - type: textarea
+    id: links
+    attributes:
+      label: 새 외부 링크
+      description: URL 또는 `표시 이름 | URL` 형식. 비워두면 기존 값을 유지합니다.
+  - type: input
+    id: video
+    attributes:
+      label: 새 영상 링크
+      description: 비워두면 기존 영상 링크를 유지합니다.
+  - type: textarea
+    id: extra
+    attributes:
+      label: 추가 설명
+      description: 비워두면 기존 메타 정보를 유지합니다.

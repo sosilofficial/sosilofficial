@@ -39,5 +39,11 @@ for (const file of ["index.html", "robots.txt", "sitemap.xml", "favicon-sosil.sv
   if (!fs.existsSync(path.join(ROOT, file))) failures.push(`${file}: 필수 파일 없음`);
 }
 
+const sitemap = fs.readFileSync(path.join(ROOT, "sitemap.xml"), "utf8");
+if (!sitemap.includes("https://sosilofficial.github.io/notes/") || sitemap.includes("/gibberish")) failures.push("sitemap.xml: Notes 공개 URL 설정 오류");
+const home = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+if (home.includes("sosil-archive.rezigitar.chatgpt.site/admin") || />edit<\/a>/.test(home)) failures.push("index.html: 이전 edit 링크가 남아 있습니다");
+if (!home.includes('href="/notes"')) failures.push("index.html: Notes navigation 경로 오류");
+
 if (failures.length) throw new Error(`SITE VALIDATION ERROR:\n${[...new Set(failures)].join("\n")}`);
 console.log(`Validated ${walk(ROOT).length} HTML pages, SEO metadata, and local asset paths.`);

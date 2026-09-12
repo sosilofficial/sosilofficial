@@ -7,7 +7,16 @@ const ORIGIN = "https://sosilofficial.github.io";
 
 const esc = (value = "") => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const uniq = (values = []) => [...new Set(values.filter(Boolean))];
-const firstImage = (item) => item.thumbnail || item.images?.[0] || "";
+function youtubeThumbnail(url = "") {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const id = host === "youtu.be" ? parsed.pathname.split("/").filter(Boolean)[0] : ["youtube.com", "m.youtube.com"].includes(host) ? parsed.searchParams.get("v") || parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1] : "";
+    return id && /^[\w-]{6,}$/.test(id) ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : "";
+  } catch { return ""; }
+}
+const videoImage = (item) => item.thumbnail || youtubeThumbnail(item.video);
+const firstImage = (item) => videoImage(item) || item.images?.[0] || "";
 const linkUrl = (item, label) => item.links?.find((link) => !label || link.label === label)?.url || "";
 const absolute = (url) => url?.startsWith("/") ? `${ORIGIN}${url}` : url;
 const displayDate = (value = "") => value.includes("-") && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value.replaceAll("-", ".") : value;
@@ -38,6 +47,8 @@ function validate(item) {
   }
   if (!/^[\p{L}\p{N}][\p{L}\p{N}-]*$/u.test(item.slug)) throw new Error(`CONTENT ERROR: slug에는 글자, 숫자, 하이픈만 사용할 수 있습니다: ${item.source}`);
   if (!Array.isArray(item.images) || !Array.isArray(item.links)) throw new Error(`CONTENT ERROR: images와 links는 배열이어야 합니다: ${item.source}`);
+  const urls = [item.thumbnail, item.video, ...item.images, ...item.links.map((link) => link.url)].filter(Boolean);
+  if (urls.some((url) => typeof url !== "string" || /[\s<>"']/.test(url))) throw new Error(`CONTENT ERROR: 이미지·영상·링크 URL에 잘못된 문자가 있습니다: ${item.source}`);
 }
 
 function walk(dir) {
@@ -89,7 +100,7 @@ function head(name, description, route, image = "", detail = false) {
 }
 
 function shell(active, main) {
-  const nav = [["info", "/info"], ["works", "/works/discography"], ["news", "/news"], ["archive", "/archive"], ["merch", "/merch"], ["notes", "/gibberish"], ["contact", "/contact"]]
+  const nav = [["info", "/info"], ["works", "/works/discography"], ["news", "/news"], ["archive", "/archive"], ["merch", "/merch"], ["notes", "/notes"], ["contact", "/contact"]]
     .map(([label, href]) => `<a href="${href}"${active === label ? ' class="is-active" aria-current="page"' : ""}>${label}</a>`).join("");
   return `<body><div class="site-frame"><a href="/" class="site-brand" aria-label="소실 홈페이지"><span class="brand-roman">sosil</span></a><aside class="side-rail"><nav class="rail-nav" aria-label="주요 메뉴">${nav}</nav></aside><main class="site-main">${main}</main></div></body></html>`;
 }
@@ -117,7 +128,7 @@ function mediaMarkup(item, title) {
   const images = uniq(item.images || []);
   const imageGallery = images.length ? `<div class="${title === "merch" ? "merch-detail-gallery" : "post-gallery"}">${images.map((url, i) => `<img${title !== "merch" ? ' class="post-image"' : ""} src="${esc(url)}" alt="${esc(item.title)} — ${i + 1}" loading="${i ? "lazy" : "eager"}" decoding="async"/>`).join("")}</div>` : "";
   const provider = /youtu(?:be|\.be)/i.test(item.video || "") ? "youtube" : "video";
-  const video = item.video ? `<div class="post-video"><a class="video-cover video-cover-youtube" href="${esc(item.video)}" target="_blank" rel="noreferrer" aria-label="${esc(item.title)} 영상 재생">${item.thumbnail ? `<img src="${esc(item.thumbnail)}" alt="" loading="lazy" decoding="async"/>` : ""}<span class="video-cover-shade"></span><span class="video-play" aria-hidden="true">▶</span><span class="video-provider">${provider}<!-- --> / play</span></a></div>` : "";
+  const video = item.video ? `<div class="post-video"><a class="video-cover video-cover-youtube" href="${esc(item.video)}" target="_blank" rel="noreferrer" aria-label="${esc(item.title)} 영상 재생">${videoImage(item) ? `<img src="${esc(videoImage(item))}" alt="" loading="lazy" decoding="async"/>` : ""}<span class="video-cover-shade"></span><span class="video-play" aria-hidden="true">▶</span><span class="video-provider">${provider}<!-- --> / play</span></a></div>` : "";
   return `${imageGallery}${video}`;
 }
 
@@ -132,14 +143,19 @@ for (const item of news) {
   writeRoute(`/news/${item.slug}`, page(item.title, item.description || item.body.slice(0, 150), `/news/${item.slug}`, "news", main, firstImage(item), true));
 }
 
-// Notes (legacy URL remains /gibberish)
+// Notes use /notes publicly; /gibberish remains a same-content compatibility alias.
+clearDetails("/notes");
 clearDetails("/gibberish");
 const notes = by("notes");
-const notesGrid = `<div class="discography-card-grid notes-catalog-grid">${notes.map((item) => `<article class="discography-style-card"><a href="/gibberish/${esc(item.slug)}" class="notes-catalog-thumb${firstImage(item) ? " has-image" : " is-text"}${item.video ? " has-video" : ""}" aria-label="${esc(item.title)} 읽기">${firstImage(item) ? `<img src="${esc(firstImage(item))}" alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer"/>` : `<span>${esc(item.meta || "note")}</span>`}</a><div class="discography-style-meta"><p>${esc(item.meta || "note")} · ${esc(displayDate(item.date))}</p><h2><a href="/gibberish/${esc(item.slug)}">${esc(item.title)}</a></h2></div></article>`).join("")}</div>`;
-writeRoute("/gibberish", page("notes", "김성빈의 음악 프로젝트 소실(Sosil)의 작업 노트와 기록.", "/gibberish", "notes", `<article class="page-wrap notes-page"><p class="page-intro page-intro-preline"></p>${notesGrid}</article>`, firstImage(notes[0])));
+const notesGrid = `<div class="discography-card-grid notes-catalog-grid">${notes.map((item) => `<article class="discography-style-card"><a href="/notes/${esc(item.slug)}" class="notes-catalog-thumb${firstImage(item) ? " has-image" : " is-text"}${item.video ? " has-video" : ""}" aria-label="${esc(item.title)} 읽기">${firstImage(item) ? `<img src="${esc(firstImage(item))}" alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer"/>` : `<span>${esc(item.meta || "note")}</span>`}</a><div class="discography-style-meta"><p>${esc(item.meta || "note")} · ${esc(displayDate(item.date))}</p><h2><a href="/notes/${esc(item.slug)}">${esc(item.title)}</a></h2></div></article>`).join("")}</div>`;
+const notesListPage = page("notes", "김성빈의 음악 프로젝트 소실(Sosil)의 작업 노트와 기록.", "/notes", "notes", `<article class="page-wrap notes-page"><p class="page-intro page-intro-preline"></p>${notesGrid}</article>`, firstImage(notes[0]));
+writeRoute("/notes", notesListPage);
+writeRoute("/gibberish", notesListPage);
 for (const item of notes) {
-  const main = `<article class="page-wrap post-detail"><p class="post-detail-date">${esc(displayDate(item.date))}</p><h1 class="post-title">${esc(item.title)}</h1>${item.description ? `<p class="post-summary">${esc(item.description)}</p>` : ""}${mediaMarkup(item, "notes")}<hr class="rule"/>${bodyHtml(item, "post-body prose")}${!item.video && item.links[0] ? `<a class="external-button" href="${esc(item.links[0].url)}" target="_blank" rel="noreferrer">관련 링크 열기 ↗</a>` : ""}<p class="back-link"><a href="/gibberish">← notes</a></p></article>`;
-  writeRoute(`/gibberish/${item.slug}`, page(item.title, item.seo_description || item.description || item.body.slice(0, 150), `/gibberish/${item.slug}`, "notes", main, firstImage(item), true));
+  const main = `<article class="page-wrap post-detail"><p class="post-detail-date">${esc(displayDate(item.date))}</p><h1 class="post-title">${esc(item.title)}</h1>${item.description ? `<p class="post-summary">${esc(item.description)}</p>` : ""}${mediaMarkup(item, "notes")}<hr class="rule"/>${bodyHtml(item, "post-body prose")}${!item.video && item.links[0] ? `<a class="external-button" href="${esc(item.links[0].url)}" target="_blank" rel="noreferrer">관련 링크 열기 ↗</a>` : ""}<p class="back-link"><a href="/notes">← notes</a></p></article>`;
+  const detailPage = page(item.title, item.seo_description || item.description || item.body.slice(0, 150), `/notes/${item.slug}`, "notes", main, firstImage(item), true);
+  writeRoute(`/notes/${item.slug}`, detailPage);
+  writeRoute(`/gibberish/${item.slug}`, detailPage);
 }
 
 // Archive photo + video are stored separately but remain in the existing combined view.
@@ -149,9 +165,9 @@ const archiveGrid = `<div class="discography-card-grid archive-media-grid">${arc
 const archiveMain = `<article class="page-wrap archive-catalog-page">${archiveNav}${archiveGrid}</article>`;
 for (const route of ["/archive", "/archive/photo-video"]) writeRoute(route, page("archive / photo & video", "소실(Sosil)의 사진, 영상, 인터뷰, 리뷰 아카이브.", route, "archive", archiveMain, firstImage(archiveMedia[0]), route !== "/archive"));
 for (const item of archiveMedia) {
-  const images = uniq([...(item.images || []), item.thumbnail]);
+  const images = item.subcategory === "video" ? uniq(item.images || []) : uniq([...(item.images || []), item.thumbnail]);
   const gallery = images.length ? `<div class="catalog-detail-gallery">${images.map((url, i) => `<figure class="catalog-detail-image"><img src="${esc(url)}" alt="${esc(item.title)} 이미지 ${i + 1}" loading="${i ? "lazy" : "eager"}" decoding="async"/></figure>`).join("")}</div>` : "";
-  const video = item.video ? `<div class="catalog-detail-video"><a class="video-cover video-cover-youtube" href="${esc(item.video)}" target="_blank" rel="noreferrer" aria-label="${esc(item.title)} 영상 재생">${item.thumbnail ? `<img src="${esc(item.thumbnail)}" alt=""/>` : ""}<span class="video-play">▶</span></a></div>` : "";
+  const video = item.video ? `<div class="catalog-detail-video"><a class="video-cover video-cover-youtube" href="${esc(item.video)}" target="_blank" rel="noreferrer" aria-label="${esc(item.title)} 영상 재생">${videoImage(item) ? `<img src="${esc(videoImage(item))}" alt=""/>` : ""}<span class="video-play">▶</span></a></div>` : "";
   const main = `<article class="page-wrap catalog-detail"><header class="catalog-detail-head"><p class="catalog-detail-date">${esc(displayDate(item.date))} · ${esc(item.media_type || item.meta || item.subcategory)}</p><h1>${esc(item.title)}</h1>${item.description ? `<p class="catalog-detail-summary">${esc(item.description)}</p>` : ""}</header>${video}${gallery}<div class="catalog-detail-columns"><div>${item.body ? `<section class="catalog-detail-section"><h2>about</h2><p class="prose">${esc(item.body)}</p></section>` : ""}</div><aside class="catalog-detail-aside"></aside></div><p class="back-link"><a href="/archive/photo-video">← photo-video</a></p></article>`;
   writeRoute(`/archive/photo-video/${item.slug}`, page(item.title, item.seo_description || item.description || item.body.slice(0, 150) || item.title, `/archive/photo-video/${item.slug}`, "archive", main, firstImage(item), true));
 }
@@ -214,12 +230,12 @@ const home = site("home");
 const featured = discography.find((item) => firstImage(item)) || discography[0];
 const homeNews = news.slice(0, 2);
 const homeNewsMarkup = homeNews.length ? `<div>${homeNews.map((item) => `<a class="dispatch-row" href="/news/${esc(item.slug)}"><span class="dispatch-date">${esc(displayDate(item.date))}</span><span class="dispatch-copy"><small>${esc(item.meta || "NOTICE")}</small><strong>${esc(item.title)}</strong></span></a>`).join("")}</div>` : '<p class="panel-empty">다음 소식을 준비하고 있습니다.</p>';
-const homeMain = `<div class="home-page"><div class="home-content"><div class="home-minimal-grid"><div class="home-cover-column">${featured ? `<a class="home-featured-release" href="${esc(linkUrl(home, "featured") || linkUrl(featured) || "/works/discography")}" target="_blank" rel="noreferrer" aria-label="${esc(featured.title)} Bandcamp에서 듣기"><img src="${esc(firstImage(featured))}" alt="${esc(featured.title)} 앨범 커버"/></a>` : ""}</div><div class="home-right-column"><section class="home-panel news-panel" aria-labelledby="now-heading"><div class="panel-head"><h2 id="now-heading">NEWS</h2><a href="/news">all news</a></div>${homeNewsMarkup}</section><section class="home-panel letters-panel" aria-labelledby="letters-heading"><div class="panel-head"><h2 id="letters-heading">${esc(home.meta)}</h2><span>occasional mail</span></div><p>${esc(home.subtitle)}</p><a class="letter-link" href="${esc(linkUrl(home, "newsletter"))}" target="_blank" rel="noreferrer">메일 남기기</a></section></div></div></div><footer class="home-footer"><a href="https://sosil-archive.rezigitar.chatgpt.site/admin">edit</a></footer></div>`;
+const homeMain = `<div class="home-page"><div class="home-content"><div class="home-minimal-grid"><div class="home-cover-column">${featured ? `<a class="home-featured-release" href="${esc(linkUrl(home, "featured") || linkUrl(featured) || "/works/discography")}" target="_blank" rel="noreferrer" aria-label="${esc(featured.title)} Bandcamp에서 듣기"><img src="${esc(firstImage(featured))}" alt="${esc(featured.title)} 앨범 커버"/></a>` : ""}</div><div class="home-right-column"><section class="home-panel news-panel" aria-labelledby="now-heading"><div class="panel-head"><h2 id="now-heading">NEWS</h2><a href="/news">all news</a></div>${homeNewsMarkup}</section><section class="home-panel letters-panel" aria-labelledby="letters-heading"><div class="panel-head"><h2 id="letters-heading">${esc(home.meta)}</h2><span>occasional mail</span></div><p>${esc(home.subtitle)}</p><a class="letter-link" href="${esc(linkUrl(home, "newsletter"))}" target="_blank" rel="noreferrer">메일 남기기</a></section></div></div></div><footer class="home-footer"></footer></div>`;
 writeRoute("/", page("소실 SOSIL", home.description, "/", "", homeMain, firstImage(featured)));
 
-const routes = ["/", "/info", "/works/discography", "/works/videos", "/works/live", "/works/others", "/news", "/archive", "/archive/photo-video", "/archive/links", "/merch", "/gibberish", "/contact"];
+const routes = ["/", "/info", "/works/discography", "/works/videos", "/works/live", "/works/others", "/news", "/archive", "/archive/photo-video", "/archive/links", "/merch", "/notes", "/contact"];
 for (const item of news) routes.push(`/news/${item.slug}`);
-for (const item of notes) routes.push(`/gibberish/${item.slug}`);
+for (const item of notes) routes.push(`/notes/${item.slug}`);
 for (const item of archiveMedia) routes.push(`/archive/photo-video/${item.slug}`);
 for (const item of discography) routes.push(`/works/discography/${item.slug}`);
 for (const item of others) routes.push(`/works/others/${item.slug}`);
