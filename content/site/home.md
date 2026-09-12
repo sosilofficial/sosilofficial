@@ -12,7 +12,7 @@ images: []
 video: ""
 links: [{"label":"featured","url":"https://sosil.bandcamp.com/album/reverie-is-my-pony"},{"label":"newsletter","url":"https://docs.google.com/forms/d/e/1FAIpQLSfAEUUjmWWbcCj-dZvg8DohqeDwNF7SxTJe1OcUBVQhUvkLxA/viewform?usp=header"}]
 meta: "Mailing List"
-subtitle: "소실의 소식을 보내드립니다. \nSending upcoming news of Sosil"
+subtitle: "소실의 소식을 보내드립니다. Sending upcoming news of Sosil"
 creator: ""
 tracklist: []
 credits: ""
