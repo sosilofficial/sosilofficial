@@ -10,7 +10,7 @@ description: "소실(Sosil)은 김성빈의 slowcore·folk 음악 프로젝트�
 thumbnail: "/media/catalog/2026-09-04/a78bfa4e-a48f-4757-9783-26024fff6536.webp"
 images: []
 video: ""
-links: [{"label":"featured","url":"https://sosil.bandcamp.com/"},{"label":"newsletter","url":"https://docs.google.com/forms/d/e/1FAIpQLSfAEUUjmWWbcCj-dZvg8DohqeDwNF7SxTJe1OcUBVQhUvkLxA/viewform?usp=header"}]
+links: [{"label":"featured","url":"https://sosil.bandcamp.com/album/reverie-is-my-pony"},{"label":"newsletter","url":"https://docs.google.com/forms/d/e/1FAIpQLSfAEUUjmWWbcCj-dZvg8DohqeDwNF7SxTJe1OcUBVQhUvkLxA/viewform?usp=header"}]
 meta: "Newsletter"
 subtitle: "소실의 소식을 보내드립니다. \nSending upcoming news of Sosil"
 creator: ""
