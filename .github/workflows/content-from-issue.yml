@@ -1,0 +1,43 @@
+name: Publish content from issue
+
+on:
+  issues:
+    types: [opened]
+
+concurrency:
+  group: sosil-content-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: startsWith(github.event.issue.title, '[Content]') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Create content file
+        run: node scripts/publish-issue.mjs
+      - name: Build static pages
+        run: node scripts/build-content.mjs
+      - name: Validate generated site
+        run: node scripts/validate-site.mjs
+      - name: Commit generated content
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content . ':!.github'
+          git commit -m "Publish content from issue #${{ github.event.issue.number }}"
+          git push origin main
+      - name: Close successful issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue close "${{ github.event.issue.number }}" --comment "사이트에 반영했습니다. GitHub Pages 배포가 이어서 진행됩니다."

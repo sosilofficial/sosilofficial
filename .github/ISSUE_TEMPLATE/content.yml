@@ -1,0 +1,75 @@
+name: 콘텐츠 등록
+description: 코드를 수정하지 않고 새 콘텐츠를 사이트에 등록합니다.
+title: "[Content] "
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: 카테고리
+      options:
+        - News
+        - Notes
+        - Archive Photo
+        - Archive Video
+        - Archive Links
+        - Works Discography
+        - Works Video
+        - Works Live
+        - Works Others
+        - Merch
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: 제목
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: 날짜
+      description: YYYY-MM-DD 형식으로 입력하세요.
+      placeholder: "2026-09-13"
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: 본문
+      description: 일반 문장이나 Markdown으로 입력할 수 있습니다.
+  - type: textarea
+    id: description
+    attributes:
+      label: 설명
+      description: 목록 요약과 상세 페이지 SEO 설명에 사용됩니다.
+  - type: textarea
+    id: thumbnail
+    attributes:
+      label: 썸네일 이미지
+      description: 이미지를 드래그해 업로드하거나 이미지 URL을 입력하세요.
+  - type: textarea
+    id: images
+    attributes:
+      label: 본문 이미지
+      description: 이미지를 드래그해 업로드하거나 이미지 URL을 한 줄에 하나씩 입력하세요.
+  - type: textarea
+    id: links
+    attributes:
+      label: 외부 링크
+      description: URL 또는 `표시 이름 | URL` 형식으로 한 줄에 하나씩 입력하세요.
+  - type: input
+    id: video
+    attributes:
+      label: 영상 링크
+      description: YouTube 등 영상 URL을 입력하세요.
+  - type: input
+    id: slug
+    attributes:
+      label: slug
+      description: 비워두면 날짜와 Issue 번호로 자동 생성됩니다. 글자, 숫자, 하이픈만 사용할 수 있습니다.
+  - type: textarea
+    id: extra
+    attributes:
+      label: 추가 설명
+      description: 필요한 경우 종류, 크레딧 등 짧은 메타 정보를 입력하세요.
