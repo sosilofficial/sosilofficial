@@ -3,3 +3,9 @@
 .letters-panel > p {
   white-space: nowrap;
 }
+
+@media (max-width: 700px) {
+  .letters-panel > p {
+    white-space: normal;
+  }
+}
