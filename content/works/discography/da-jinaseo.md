@@ -12,7 +12,7 @@ thumbnail: "/media/catalog/da-jinaseo.jpg"
 images: ["/media/catalog/da-jinaseo.jpg"]
 video: ""
 links: [{"label":"Bandcamp","url":"https://sosil.bandcamp.com/album/da-jinaseo"}]
-meta: "audio"
+meta: "EP"
 subtitle: "Da Jinaseo"
 creator: ""
 tracklist: ["파도는 결국 Eventually Wave is","잠기운 Jamkioon","다 지나서 Da Jinaseo","Drake","Ma"]
